@@ -1,0 +1,94 @@
+import React from 'react';
+import { notFound } from 'next/navigation';
+import type { Metadata } from 'next';
+import { getChurchWebsiteData } from '@/lib/supabase';
+import { getTemplateConfig } from '@/lib/templates';
+
+export const metadata: Metadata = {
+  title: 'Ministries',
+};
+
+export default async function MinistriesPage({
+  params,
+}: {
+  params: Promise<{ site: string }>;
+}) {
+  const { site } = await params;
+  const data = await getChurchWebsiteData(site);
+  if (!data) notFound();
+
+  const { church, ministries } = data;
+  const theme = getTemplateConfig(church.website_template);
+  const brandColor = church.primary_color || '#2563EB';
+
+  return (
+    <div className={`max-w-7xl mx-auto ${theme.sectionPadding}`}>
+      <div className="max-w-3xl mb-12">
+        <h1 className={`text-4xl md:text-5xl mb-4 ${theme.headingClass}`}>
+          Ministries at {church.name}
+        </h1>
+        <p className={`text-lg ${theme.textSecondary}`}>
+          Find a place to connect, grow, and serve alongside our church family.
+        </p>
+      </div>
+
+      {ministries.length === 0 ? (
+        <div className={`p-12 text-center ${theme.cardClass}`}>
+          <p className={theme.textSecondary}>
+            Our ministry directory is being updated. Check back soon!
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {ministries.map((m) => (
+            <div key={m.id} className={`overflow-hidden flex flex-col ${theme.cardClass}`}>
+              {m.image_url && (
+                <img
+                  src={m.image_url}
+                  alt={m.name}
+                  className="h-52 w-full object-cover"
+                />
+              )}
+              <div className="p-6 flex-1 flex flex-col">
+                <h2 className={`text-2xl mb-2 ${theme.headingClass}`}>{m.name}</h2>
+                {m.meeting_schedule && (
+                  <p className="text-sm font-semibold mb-1" style={{ color: brandColor }}>
+                    {m.meeting_schedule}
+                  </p>
+                )}
+                {m.location && (
+                  <p className={`text-xs mb-3 ${theme.textSecondary}`}>
+                    Location: {m.location}
+                  </p>
+                )}
+                {m.description && (
+                  <p className={`text-sm leading-relaxed flex-1 mb-4 ${theme.textSecondary}`}>
+                    {m.description}
+                  </p>
+                )}
+                {(m.leader_name || m.contact_email) && (
+                  <div className="pt-4 mt-auto border-t border-current/10 text-xs">
+                    {m.leader_name && (
+                      <p className={theme.textSecondary}>
+                        <strong>Leader:</strong> {m.leader_name}
+                      </p>
+                    )}
+                    {m.contact_email && (
+                      <a
+                        href={`mailto:${m.contact_email}`}
+                        className="inline-block mt-1 font-semibold underline"
+                        style={{ color: brandColor }}
+                      >
+                        Contact Ministry
+                      </a>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
