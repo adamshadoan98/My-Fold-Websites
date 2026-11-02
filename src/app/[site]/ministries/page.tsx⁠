@@ -4,6 +4,9 @@ import type { Metadata } from 'next';
 import { getChurchWebsiteData } from '@/lib/supabase';
 import { getTemplateConfig } from '@/lib/templates';
 
+export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Ministries',
 };
@@ -15,9 +18,10 @@ export default async function MinistriesPage({
 }) {
   const { site } = await params;
   const data = await getChurchWebsiteData(site);
-  if (!data) notFound();
+  if (!data || !data.church) notFound();
 
-  const { church, ministries } = data;
+  const church = data.church;
+  const ministries = Array.isArray(data.ministries) ? data.ministries : [];
   const theme = getTemplateConfig(church.website_template);
   const brandColor = church.primary_color || '#2563EB';
 
